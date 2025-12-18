@@ -149,7 +149,7 @@ export default function InstructorDashboard() {
             <nav className="bg-white shadow-sm border-b">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                             <span className="text-xl">👨‍🏫</span>
                         </div>
                         <div>
@@ -171,7 +171,7 @@ export default function InstructorDashboard() {
             <div className="max-w-7xl mx-auto px-6 py-8">
                 {/* Stats Cards */}
                 <div className="grid md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
+                    <div className="bg-linear-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
                         <div className="flex items-center justify-between mb-2">
                             <p className="text-blue-100 text-sm font-medium">Total Doubts</p>
                             <span className="text-3xl">📊</span>
@@ -179,7 +179,7 @@ export default function InstructorDashboard() {
                         <p className="text-4xl font-bold">{stats.total}</p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-yellow-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
+                    <div className="bg-linear-to-br from-yellow-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
                         <div className="flex items-center justify-between mb-2">
                             <p className="text-yellow-100 text-sm font-medium">Open Doubts</p>
                             <span className="text-3xl">⏳</span>
@@ -187,7 +187,7 @@ export default function InstructorDashboard() {
                         <p className="text-4xl font-bold">{stats.open}</p>
                     </div>
 
-                    <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
+                    <div className="bg-linear-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
                         <div className="flex items-center justify-between mb-2">
                             <p className="text-green-100 text-sm font-medium">Resolved</p>
                             <span className="text-3xl">✅</span>
@@ -211,7 +211,7 @@ export default function InstructorDashboard() {
                             <button
                                 onClick={() => setFilter("ALL")}
                                 className={`px-6 py-3 rounded-lg font-medium transition ${filter === "ALL"
-                                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                                        ? "bg-linear-to-r from-blue-600 to-purple-600 text-white"
                                         : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                                     }`}
                             >
@@ -220,7 +220,7 @@ export default function InstructorDashboard() {
                             <button
                                 onClick={() => setFilter("OPEN")}
                                 className={`px-6 py-3 rounded-lg font-medium transition ${filter === "OPEN"
-                                        ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
+                                        ? "bg-linear-to-r from-yellow-500 to-orange-500 text-white"
                                         : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                                     }`}
                             >
@@ -229,7 +229,7 @@ export default function InstructorDashboard() {
                             <button
                                 onClick={() => setFilter("RESOLVED")}
                                 className={`px-6 py-3 rounded-lg font-medium transition ${filter === "RESOLVED"
-                                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white"
+                                        ? "bg-linear-to-r from-green-500 to-green-600 text-white"
                                         : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                                     }`}
                             >
@@ -341,7 +341,7 @@ export default function InstructorDashboard() {
                                                 <button
                                                     onClick={() => handleAnswerSubmit(doubt.id)}
                                                     disabled={loading}
-                                                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                                    className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                                                 >
                                                     {loading ? "Submitting..." : "Submit Answer"}
                                                 </button>
@@ -361,7 +361,7 @@ export default function InstructorDashboard() {
                                         <div className="flex gap-2 pt-4 border-t">
                                             <button
                                                 onClick={() => setSelectedDoubt(doubt.id)}
-                                                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium"
+                                                className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition font-medium"
                                             >
                                                 💬 Answer This Doubt
                                             </button>

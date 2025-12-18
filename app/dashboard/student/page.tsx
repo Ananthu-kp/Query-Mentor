@@ -215,7 +215,7 @@ export default function StudentDashboard() {
             <nav className="bg-white shadow-sm border-b">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                             <span className="text-xl">🎓</span>
                         </div>
                         <div>
@@ -279,7 +279,7 @@ export default function StudentDashboard() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? "Submitting..." : "Submit Doubt"}
                         </button>

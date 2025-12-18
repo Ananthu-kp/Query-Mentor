@@ -10,7 +10,7 @@ export default async function Home() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700">
+        <div className="min-h-screen bg-linear-to-br from-blue-600 via-purple-600 to-indigo-700">
             {/* Navigation */}
             <nav className="bg-white/10 backdrop-blur-md border-b border-white/20">
                 <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
