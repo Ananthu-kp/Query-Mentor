@@ -1,17 +1,16 @@
-import { withAuth } from "next-auth/middleware";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default withAuth(
-  function middleware(req) {
-    // You can add custom logic here if needed
-    return NextResponse.next();
-  },
-  {
-    pages: {
-      signIn: "/login",
-    },
+export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request });
+  
+  if (!token) {
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
-);
+  
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/dashboard/:path*"],
