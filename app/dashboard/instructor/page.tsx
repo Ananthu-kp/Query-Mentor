@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
-import Link from "next/link";
 import toast from "react-hot-toast";
 
 interface Doubt {
@@ -33,20 +32,33 @@ export default function InstructorDashboard() {
     const [selectedDoubt, setSelectedDoubt] = useState<string | null>(null);
     const [answer, setAnswer] = useState("");
     const [loading, setLoading] = useState(false);
+    const [fetchLoading, setFetchLoading] = useState(true);
     const [filter, setFilter] = useState<"ALL" | "OPEN" | "RESOLVED">("ALL");
     const [answerError, setAnswerError] = useState("");
+    const [aiLoading, setAiLoading] = useState(false);
 
     useEffect(() => {
         fetchDoubts();
     }, []);
 
     async function fetchDoubts() {
+        setFetchLoading(true);
         try {
             const res = await fetch("/api/doubts");
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || "Failed to fetch doubts");
+            }
+
             const data = await res.json();
             setDoubts(data);
         } catch (error) {
-            toast.error("Failed to fetch doubts");
+            toast.error(
+                error instanceof Error ? error.message : "Failed to fetch doubts"
+            );
+        } finally {
+            setFetchLoading(false);
         }
     }
 
@@ -59,8 +71,47 @@ export default function InstructorDashboard() {
             setAnswerError("Answer must be at least 10 characters");
             return false;
         }
+        if (answer.trim().length > 2000) {
+            setAnswerError("Answer must not exceed 2000 characters");
+            return false;
+        }
         setAnswerError("");
         return true;
+    }
+
+    async function getAISuggestion(doubt: Doubt) {
+        setAiLoading(true);
+        const loadingToast = toast.loading("AI is generating a suggestion...");
+
+        try {
+            const res = await fetch("/api/ai/suggest-answer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    title: doubt.title,
+                    content: doubt.content,
+                }),
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || "Failed to generate AI suggestion");
+            }
+
+            const data = await res.json();
+            setAnswer(data.suggestion);
+            toast.success("AI suggestion generated! You can edit it before submitting.", {
+                id: loadingToast,
+                duration: 4000,
+            });
+        } catch (error) {
+            toast.error(
+                error instanceof Error ? error.message : "Failed to generate AI suggestion",
+                { id: loadingToast }
+            );
+        } finally {
+            setAiLoading(false);
+        }
     }
 
     async function handleAnswerSubmit(doubtId: string) {
@@ -79,15 +130,21 @@ export default function InstructorDashboard() {
                 body: JSON.stringify({ content: answer.trim() }),
             });
 
-            if (!res.ok) throw new Error();
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || "Failed to submit answer");
+            }
 
             toast.success("Answer submitted successfully!", { id: loadingToast });
             setAnswer("");
             setAnswerError("");
             setSelectedDoubt(null);
-            fetchDoubts();
+            await fetchDoubts();
         } catch (error) {
-            toast.error("Failed to submit answer", { id: loadingToast });
+            toast.error(
+                error instanceof Error ? error.message : "Failed to submit answer",
+                { id: loadingToast }
+            );
         } finally {
             setLoading(false);
         }
@@ -97,13 +154,22 @@ export default function InstructorDashboard() {
         const loadingToast = toast.loading("Marking as resolved...");
 
         try {
-            const res = await fetch(`/api/doubts/${id}/resolve`, { method: "PATCH" });
-            if (!res.ok) throw new Error();
+            const res = await fetch(`/api/doubts/${id}/resolve`, {
+                method: "PATCH",
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || "Failed to mark as resolved");
+            }
 
             toast.success("Doubt marked as resolved!", { id: loadingToast });
-            fetchDoubts();
+            await fetchDoubts();
         } catch (error) {
-            toast.error("Failed to mark as resolved", { id: loadingToast });
+            toast.error(
+                error instanceof Error ? error.message : "Failed to mark as resolved",
+                { id: loadingToast }
+            );
         }
     }
 
@@ -117,10 +183,15 @@ export default function InstructorDashboard() {
             const res = await fetch(
                 `/api/doubts/search?q=${encodeURIComponent(searchQuery)}&status=${filter}`
             );
+
+            if (!res.ok) {
+                throw new Error("Search failed");
+            }
+
             const data = await res.json();
             setDoubts(data);
         } catch (error) {
-            toast.error("Search failed");
+            toast.error("Search failed. Please try again.");
         }
     }
 
@@ -153,18 +224,18 @@ export default function InstructorDashboard() {
                             <span className="text-xl">👨‍🏫</span>
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-gray-900">Instructor Dashboard</h1>
+                            <h1 className="text-xl font-bold text-gray-900">
+                                Instructor Dashboard
+                            </h1>
                             <p className="text-sm text-gray-600">Answer student doubts</p>
                         </div>
                     </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => signOut({ callbackUrl: "/auth/login" })}
-                            className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium"
-                        >
-                            Logout
-                        </button>
-                    </div>
+                    <button
+                        onClick={() => signOut({ callbackUrl: "/auth/login" })}
+                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium"
+                    >
+                        Logout
+                    </button>
                 </div>
             </nav>
 
@@ -181,7 +252,9 @@ export default function InstructorDashboard() {
 
                     <div className="bg-linear-to-br from-yellow-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
                         <div className="flex items-center justify-between mb-2">
-                            <p className="text-yellow-100 text-sm font-medium">Open Doubts</p>
+                            <p className="text-yellow-100 text-sm font-medium">
+                                Open Doubts
+                            </p>
                             <span className="text-3xl">⏳</span>
                         </div>
                         <p className="text-4xl font-bold">{stats.open}</p>
@@ -198,7 +271,9 @@ export default function InstructorDashboard() {
 
                 {/* Search & Filter */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">🔍 Search & Filter</h2>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                        🔍 Search & Filter
+                    </h2>
                     <div className="flex flex-col md:flex-row gap-3">
                         <input
                             type="text"
@@ -242,9 +317,19 @@ export default function InstructorDashboard() {
                 {/* Doubts List */}
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                        {filter === "ALL" ? "All Doubts" : filter === "OPEN" ? "Open Doubts" : "Resolved Doubts"}
+                        {filter === "ALL"
+                            ? "All Doubts"
+                            : filter === "OPEN"
+                                ? "Open Doubts"
+                                : "Resolved Doubts"}
                     </h2>
-                    {filteredDoubts.length === 0 ? (
+
+                    {fetchLoading ? (
+                        <div className="bg-white p-12 rounded-xl shadow-sm border text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-600 border-t-transparent mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading doubts...</p>
+                        </div>
+                    ) : filteredDoubts.length === 0 ? (
                         <div className="bg-white p-12 rounded-xl shadow-sm border text-center">
                             <div className="text-6xl mb-4">
                                 {filter === "OPEN" ? "🎉" : "📭"}
@@ -269,7 +354,10 @@ export default function InstructorDashboard() {
                                             </h3>
                                             <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
                                                 <span className="flex items-center gap-1">
-                                                    👤 <span className="font-medium">{doubt.author.name}</span>
+                                                    👤{" "}
+                                                    <span className="font-medium">
+                                                        {doubt.author.name}
+                                                    </span>
                                                 </span>
                                                 <span className="text-gray-400">•</span>
                                                 <span className="flex items-center gap-1">
@@ -277,12 +365,20 @@ export default function InstructorDashboard() {
                                                 </span>
                                                 <span className="text-gray-400">•</span>
                                                 <span className="flex items-center gap-1">
-                                                    📅 {new Date(doubt.createdAt).toLocaleDateString()}
+                                                    📅{" "}
+                                                    {new Date(doubt.createdAt).toLocaleDateString(
+                                                        "en-US",
+                                                        {
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                        }
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
                                         <span
-                                            className={`px-4 py-2 rounded-full text-sm font-semibold ${doubt.status === "RESOLVED"
+                                            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${doubt.status === "RESOLVED"
                                                     ? "bg-green-100 text-green-800"
                                                     : "bg-yellow-100 text-yellow-800"
                                                 }`}
@@ -292,7 +388,9 @@ export default function InstructorDashboard() {
                                     </div>
 
                                     <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                                        <p className="text-gray-700 leading-relaxed">{doubt.content}</p>
+                                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                            {doubt.content}
+                                        </p>
                                     </div>
 
                                     {/* Existing Answers */}
@@ -307,10 +405,19 @@ export default function InstructorDashboard() {
                                                         key={ans.id}
                                                         className="bg-blue-50 p-4 rounded-lg border border-blue-100"
                                                     >
-                                                        <p className="text-gray-800 leading-relaxed">{ans.content}</p>
+                                                        <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                                            {ans.content}
+                                                        </p>
                                                         <p className="text-sm text-gray-600 mt-2">
                                                             👨‍🏫 {ans.author.name} •{" "}
-                                                            {new Date(ans.createdAt).toLocaleDateString()}
+                                                            {new Date(ans.createdAt).toLocaleDateString(
+                                                                "en-US",
+                                                                {
+                                                                    year: "numeric",
+                                                                    month: "long",
+                                                                    day: "numeric",
+                                                                }
+                                                            )}
                                                         </p>
                                                     </div>
                                                 ))}
@@ -321,9 +428,28 @@ export default function InstructorDashboard() {
                                     {/* Answer Form */}
                                     {selectedDoubt === doubt.id ? (
                                         <div className="border-t pt-4">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Write your answer
-                                            </label>
+                                            <div className="flex justify-between items-center mb-3">
+                                                <label className="block text-sm font-medium text-gray-700">
+                                                    Write your answer
+                                                </label>
+                                                <button
+                                                    onClick={() => getAISuggestion(doubt)}
+                                                    disabled={aiLoading}
+                                                    className="flex items-center gap-2 bg-linear-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                                >
+                                                    {aiLoading ? (
+                                                        <>
+                                                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                                                            Generating...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span>✨</span>
+                                                            AI Suggest Answer
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
                                             <textarea
                                                 value={answer}
                                                 onChange={(e) => {
@@ -331,19 +457,36 @@ export default function InstructorDashboard() {
                                                     setAnswerError("");
                                                 }}
                                                 placeholder="Provide a clear and helpful answer..."
+                                                maxLength={2000}
                                                 className={`w-full px-4 py-3 border rounded-lg h-40 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition ${answerError ? "border-red-500" : "border-gray-300"
                                                     }`}
                                             />
-                                            {answerError && (
-                                                <p className="text-red-500 text-sm mt-1">{answerError}</p>
-                                            )}
-                                            <div className="flex gap-2 mt-3">
+                                            <div className="flex justify-between items-center mt-1 mb-3">
+                                                {answerError ? (
+                                                    <p className="text-red-500 text-sm">{answerError}</p>
+                                                ) : (
+                                                    <p className="text-gray-500 text-sm">
+                                                        Minimum 10 characters required
+                                                    </p>
+                                                )}
+                                                <p className="text-gray-400 text-xs">
+                                                    {answer.length}/2000
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleAnswerSubmit(doubt.id)}
-                                                    disabled={loading}
+                                                    disabled={loading || aiLoading}
                                                     className="bg-linear-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                                                 >
-                                                    {loading ? "Submitting..." : "Submit Answer"}
+                                                    {loading ? (
+                                                        <span className="flex items-center gap-2">
+                                                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                                                            Submitting...
+                                                        </span>
+                                                    ) : (
+                                                        "Submit Answer"
+                                                    )}
                                                 </button>
                                                 <button
                                                     onClick={() => {
@@ -351,7 +494,8 @@ export default function InstructorDashboard() {
                                                         setAnswer("");
                                                         setAnswerError("");
                                                     }}
-                                                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-medium"
+                                                    disabled={loading || aiLoading}
+                                                    className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition font-medium disabled:opacity-50"
                                                 >
                                                     Cancel
                                                 </button>
