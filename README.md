@@ -4,7 +4,7 @@ A full-stack Next.js application that connects students with instructors to reso
 
 ## 🚀 Live Demo
 
-**[View Live Application](your-deployment-url-here)**
+**[View Live Application](https://query-mentor.vercel.app/)**
 
 ---
 
@@ -26,8 +26,6 @@ In large online courses, student doubts often get:
 - ✅ Create, edit, and delete doubts
 - ✅ Real-time search through all doubts
 - ✅ View instructor responses
-- ✅ Mark doubts as resolved
-- ✅ Character count validation (5-100 for title, 10-1000 for content)
 
 ### 👨‍🏫 Instructor Features
 - ✅ View all student doubts with filtering (All/Open/Resolved)
